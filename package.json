@@ -1,0 +1,13 @@
+{
+  "name": "llm-extract",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Structured extraction from invoices and emails: Zod-validated JSON, retry on invalid output, per-field confidence, review queue and a cost/latency log.",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "test": "node scripts/smoke.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "zod": "^3.25.0" }
+}

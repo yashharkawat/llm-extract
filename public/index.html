@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Structured Extraction — validated LLM output</title>
+<meta name="description" content="Paste an invoice or email, get schema-validated JSON with per-field confidence, retries on invalid output, a human review queue and a cost/latency log. Built by Yash Harkawat." />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Structured Extraction <span class="tag">LLM → validated JSON</span></h1>
+    <p class="sub">Paste an invoice or an email. You get JSON that has passed a schema, a confidence score per field, and anything doubtful goes to a review queue instead of straight into your system.</p>
+    <nav>
+      <button class="tab active" data-tab="extract">Extract</button>
+      <button class="tab" data-tab="review">Review queue <span id="review-count" class="count">0</span></button>
+      <button class="tab" data-tab="log">Cost &amp; latency log</button>
+      <button class="tab" data-tab="how">How it works</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <section id="tab-extract" class="panel">
+    <div class="row">
+      <label>Document type
+        <select id="schema"><option value="invoice">Invoice</option><option value="email">Email lead</option></select>
+      </label>
+      <span class="samples">Try a sample: <span id="sample-btns"></span></span>
+    </div>
+    <textarea id="text" rows="14" maxlength="8000" placeholder="Paste an invoice or an email here…"></textarea>
+    <button id="go">Extract</button>
+    <div id="result" hidden>
+      <div id="banner" class="banner"></div>
+      <h3>Fields</h3>
+      <table class="grid"><thead><tr><th>Field</th><th>Value</th><th>Confidence</th><th>Why flagged</th></tr></thead><tbody id="fields"></tbody></table>
+      <h3>Checks</h3>
+      <ul id="checks" class="checks"></ul>
+      <h3>Attempts</h3>
+      <ol id="attempts" class="attempts"></ol>
+      <details><summary>Raw JSON</summary><pre id="raw"></pre></details>
+    </div>
+  </section>
+
+  <section id="tab-review" class="panel" hidden>
+    <p>Fields below 0.75 confidence land here, with the reason. In a real deployment these would block the write to your accounting system or CRM until someone approves or corrects them. The queue is stored in this browser.</p>
+    <div id="queue"></div>
+  </section>
+
+  <section id="tab-log" class="panel" hidden>
+    <div id="log-summary" class="summary"></div>
+    <table class="grid"><thead><tr><th>Time</th><th>Type</th><th>Model</th><th>Attempts</th><th>Valid</th><th>Latency</th><th>Tokens in / out</th><th>Cost</th><th>Flagged</th></tr></thead><tbody id="log-rows"></tbody></table>
+    <button id="clear-log" class="ghost">Clear log</button>
+  </section>
+
+  <section id="tab-how" class="panel" hidden>
+    <ol class="how">
+      <li><b>Schema first.</b> Each document type has a Zod schema: required fields, ISO dates, 3-letter currency codes, numbers without separators, at least one line item.</li>
+      <li><b>Extract.</b> A free LLM (via OpenRouter, rotating models if one is busy) returns <code>{"data": …, "confidence": {field: 0–1}}</code> in JSON mode.</li>
+      <li><b>Validate and retry.</b> If the JSON doesn't parse or fails the schema, the exact errors go back to the model ("invoice_date: must be YYYY-MM-DD") and it tries again, up to 3 attempts. Every attempt is shown.</li>
+      <li><b>Check.</b> The model's confidence is only a starting point. Code checks the arithmetic (quantity × price, subtotal, total), that invoice numbers, emails and amounts actually appear in the text, and that dates make sense. A failed check caps that field's confidence.</li>
+      <li><b>Review.</b> Fields under 0.75 go to the review queue with the reason. Latency, tokens and cost for every run are in the log (the models are free, so cost is $0).</li>
+    </ol>
+    <p>Source code and write-up: <a href="https://github.com/yashharkawat/llm-extract" target="_blank" rel="noopener">github.com/yashharkawat/llm-extract</a>. Sample documents are made up.</p>
+  </section>
+</main>
+<footer class="wrap">Built by <a href="https://yashharkawat.com" target="_blank" rel="noopener">Yash Harkawat</a> · free models only · nothing is stored on the server</footer>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -54,7 +54,8 @@ function render(j) {
   $("#result").hidden = false;
   const n = j.attempts?.length || 0;
   if (!j.ok) {
-    alertBanner("bad", `<b>No valid output.</b> ${esc(j.error || "")}`);
+    const why = (j.attempts || []).flatMap((a) => a.errors || []).slice(-1)[0] || "";
+    alertBanner("bad", `<b>No valid output.</b> ${esc(j.error || "")}${why ? `<br><small>${esc(why)}</small>` : ""}<br><small>Free models are sometimes busy; trying again in a minute usually works.</small>`);
     $("#fields").innerHTML = "";
     $("#checks").innerHTML = "";
   } else {

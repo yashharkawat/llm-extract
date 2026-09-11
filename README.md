@@ -1,6 +1,6 @@
 # Structured Extraction — schema-validated LLM output with a review queue
 
-**Live demo:** LIVE_URL_PLACEHOLDER
+**Live demo:** https://llm-extract-psi.vercel.app
 
 Paste an invoice or an email and get JSON that has passed a schema, a confidence score for every field, and a human review queue for anything doubtful. Every run is logged with its latency, tokens and cost. It's the pattern you want before LLM output is allowed to write into an accounting system or CRM.
 

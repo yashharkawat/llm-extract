@@ -4,13 +4,14 @@
 //    retry (up to 3 attempts in total). Every attempt is logged with its model, latency, tokens and errors.
 // 3. Run deterministic checks that can lower confidence; low-confidence fields are returned as needs_review.
 import { chat, parseJsonObject } from "../lib/openrouter.js";
+import { guard, BUSY } from "../lib/guard.js";
 import { SCHEMAS } from "../lib/schemas.js";
 import { runChecks } from "../lib/checks.js";
 
 const MAX_ATTEMPTS = 3;
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  if (!guard(req, res, { perMinute: 4, perDay: 25 })) return;
   const { schema, text } = req.body || {};
   const spec = SCHEMAS[schema];
   if (!spec) return res.status(400).json({ error: `schema must be one of: ${Object.keys(SCHEMAS).join(", ")}` });
@@ -38,7 +39,9 @@ export default async function handler(req, res) {
     try {
       r = await chat({ messages, json: true, maxTokens: 1000 });
     } catch (e) {
-      attempts.push({ attempt, ok: false, errors: [e.message.slice(0, 300)] });
+      // Nothing answered: say so plainly instead of reporting it as a validation failure.
+      if (!attempts.length) return res.status(503).json({ ok: false, error: BUSY, attempts: [], latency_ms: Date.now() - t0, tokens, cost_usd: 0 });
+      attempts.push({ attempt, ok: false, errors: [BUSY] });
       break;
     }
     tokens.prompt += r.usage?.prompt_tokens || 0;
